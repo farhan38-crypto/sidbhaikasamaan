@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intervue — interview preparation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <section id="loginScreen" class="login-screen" aria-labelledby="loginTitle">
+    <div class="weather-scene" aria-hidden="true">
+      <span class="sun"></span>
+      <span class="cloud cloud-one"></span>
+      <span class="cloud cloud-two"></span>
+      <span class="horizon"></span>
+    </div>
+    <div class="rain" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      <i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+    <div class="login-card">
+      <div class="login-mark" aria-hidden="true">i</div>
+      <p class="eyebrow">INTERVUE</p>
+      <h1 id="loginTitle">Practice with purpose.</h1>
+      <p class="login-copy">Build a focused question set for your next interview in a few quiet minutes.</p>
+
+      <button id="demoLogin" class="btn primary wide" type="button">Continue as Sid Rawat</button>
+      <p class="demo-detail">Demo workspace · sid.rawat@intervue.demo</p>
+
+      <div class="divider"><span>or</span></div>
+      {% if google_client_id %}
+      <div id="googleSignIn" class="google-signin" aria-label="Sign in with Google"></div>
+      {% else %}
+      <button id="googleUnavailable" class="btn ghost wide" type="button" disabled>Google sign-in needs a client ID</button>
+      {% endif %}
+      <p id="loginError" class="form-error" role="alert" hidden></p>
+      <p class="login-terms">By continuing, you agree to use this practice workspace responsibly.</p>
+    </div>
+  </section>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">i</span>
+      <div>
+        <h1>Intervue</h1>
+        <p class="sub">Focused interview practice</p>
+      </div>
+    </div>
+    <div class="account-area">
+      <span id="providerBadge" class="provider-badge">Checking AI…</span>
+      <button id="accountButton" class="account-button" type="button" aria-label="Sign out">SR</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- ========================= FORM ========================= -->
+    <section class="panel form-panel">
+      <form id="genForm" novalidate>
+        <h2>Interview setup</h2>
+
+        <label class="field">
+          <span>Job role <em>*</em></span>
+          <input id="role" name="role" type="text" maxlength="100" placeholder="e.g. Backend Developer" required>
+          <div class="chips" id="roleChips">
+            <button type="button" class="chip">Software Engineer</button>
+            <button type="button" class="chip">Data Analyst</button>
+            <button type="button" class="chip">Frontend Developer</button>
+            <button type="button" class="chip">ML Engineer</button>
+            <button type="button" class="chip">Product Manager</button>
+          </div>
+        </label>
+
+        <div class="row">
+          <label class="field">
+            <span>Experience level</span>
+            <select id="level" name="level">
+              {% for l in levels %}<option>{{ l }}</option>{% endfor %}
+            </select>
+          </label>
+          <label class="field">
+            <span>Difficulty</span>
+            <select id="difficulty" name="difficulty">
+              {% for d in difficulties %}<option {% if d == 'Mixed' %}selected{% endif %}>{{ d }}</option>{% endfor %}
+            </select>
+          </label>
+        </div>
+
+        <fieldset class="field">
+          <legend>Question types</legend>
+          <div class="checks">
+            {% for t in types %}
+            <label class="check">
+              <input type="checkbox" name="types" value="{{ t }}" {% if t in ['Technical','Behavioral','HR'] %}checked{% endif %}>
+              <span>{{ t }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <label class="field">
+          <span>Key skills <small>(comma separated)</small></span>
+          <input id="skills" name="skills" type="text" placeholder="e.g. Python, SQL, REST APIs">
+        </label>
+
+        <div class="row">
+          <label class="field">
+            <span>Company / industry <small>(optional)</small></span>
+            <input id="company" name="company" type="text" maxlength="100" placeholder="e.g. Fintech startup">
+          </label>
+          <label class="field count-field">
+            <span>Questions: <strong id="countOut">{{ default_questions }}</strong></span>
+            <input id="count" name="count" type="range" min="{{ min_questions }}" max="{{ max_questions }}" value="{{ default_questions }}">
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Coding practice problems <small>(LeetCode + Codeforces)</small></span>
+          <div id="problemSelect" class="custom-select">
+            <input id="problemCount" name="problem_count" type="hidden" value="5">
+            <button class="select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">5 problems <span aria-hidden="true">⌄</span></button>
+            <div class="select-options" role="listbox" hidden>
+              <button type="button" role="option" data-value="0">None</button>
+              <button type="button" role="option" data-value="3">3 problems</button>
+              <button type="button" role="option" data-value="5" aria-selected="true">5 problems</button>
+              <button type="button" role="option" data-value="8">8 problems</button>
+              <button type="button" role="option" data-value="10">10 problems</button>
+            </div>
+          </div>
+        </label>
+
+        <details class="field jd">
+          <summary>Paste a job description <small>(optional, improves relevance)</small></summary>
+          <textarea id="jd" name="job_description" rows="5" maxlength="4000" placeholder="Paste the job posting here…"></textarea>
+        </details>
+
+        <p id="formError" class="form-error" role="alert" hidden></p>
+        <button id="generateBtn" class="btn primary wide" type="submit">
+          <span class="btn-label">Generate questions</span>
+        </button>
+      </form>
+
+      <div class="history">
+        <div class="history-head">
+          <h3>Recent sets</h3>
+          <button id="clearHistory" class="link-btn" type="button">Clear</button>
+        </div>
+        <ul id="historyList"><li class="muted">Nothing yet.</li></ul>
+      </div>
+    </section>
+
+    <!-- ======================= RESULTS ======================= -->
+    <section class="panel results-panel" aria-live="polite">
+      <div id="emptyState" class="empty">
+        <div class="empty-art" aria-hidden="true">
+          <span>Q</span><span>&amp;</span><span>A</span>
+        </div>
+        <h2>Your questions will appear here</h2>
+        <p>Pick a role, choose question types and hit <strong>Generate</strong>. Then click
+          <strong>Practice</strong> on any question to type an answer and get scored feedback.</p>
+      </div>
+
+      <div id="loading" class="loading" hidden>
+        <div class="spinner"></div>
+        <p>Thinking like an interviewer… <span id="loadingTimer"></span></p>
+        <p class="muted small-text">Writing 10–15 fresh questions usually takes 5–20 seconds.</p>
+      </div>
+
+      <div id="results" hidden>
+        <div class="results-head">
+          <div>
+            <h2 id="resultsTitle">Questions</h2>
+            <p id="resultsMeta" class="muted"></p>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="newSet" type="button">New set</button>
+            <button class="btn ghost" id="copyAll" type="button">Copy all</button>
+            <button class="btn ghost" id="downloadTxt" type="button">Download</button>
+            <button class="btn ghost" id="printBtn" type="button">Print / PDF</button>
+          </div>
+        </div>
+        <p id="notice" class="notice" hidden></p>
+
+        <div class="filters" id="filters"></div>
+        <ol id="questionList" class="question-list"></ol>
+
+        <section id="practiceBox" class="practice-section" hidden>
+          <div class="practice-head">
+            <div>
+              <h2>Practice problems</h2>
+              <p id="sourcesLine" class="muted small-text"></p>
+            </div>
+            <button class="btn ghost" id="shuffleProblems" type="button">Shuffle problems</button>
+          </div>
+          <p id="practiceNote" class="notice" hidden></p>
+          <ul id="problemList" class="problem-list"></ul>
+
+          <div id="topicBox" class="topic-box" hidden>
+            <h3>Read up on these topics <small>(GeeksforGeeks)</small></h3>
+            <div id="topicLinks" class="topic-links"></div>
+          </div>
+          <div id="resourceBox" class="resource-box" hidden>
+            <h3>More free prep resources</h3>
+            <ul id="resourceList"></ul>
+          </div>
+        </section>
+
+        <div id="tipsBox" class="tips" hidden>
+          <h3>Preparation tips</h3>
+          <ul id="tipsList"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">Intervue · AI-assisted interview preparation · Always review generated material.</footer>
+
+  <template id="questionTpl">
+    <li class="qcard">
+      <div class="qhead">
+        <span class="qnum"></span>
+        <div class="badges"></div>
+      </div>
+      <p class="qtext"></p>
+      <p class="why muted"></p>
+      <div class="qbuttons">
+        <button type="button" class="btn small ghost toggle-points">Show answer guide</button>
+        <button type="button" class="btn small ghost practice-btn">Practice</button>
+        <button type="button" class="btn small ghost copy-one">Copy</button>
+      </div>
+      <div class="points" hidden>
+        <h4>A strong answer covers</h4>
+        <ul></ul>
+        <p class="follow"><strong>Likely follow-up:</strong> <span></span></p>
+      </div>
+      <div class="practice" hidden>
+        <textarea rows="5" maxlength="5000" placeholder="Type your answer as you would say it in the interview…"></textarea>
+        <div class="practice-bar">
+          <span class="muted wc">0 words</span>
+          <button type="button" class="btn small primary eval-btn">Get feedback</button>
+        </div>
+        <div class="feedback" hidden></div>
+      </div>
+    </li>
+  </template>
+
+  <template id="problemTpl">
+    <li class="pcard">
+      <div class="phead">
+        <span class="src"></span>
+        <span class="pdiff badge"></span>
+        <span class="classic badge" hidden>Classic</span>
+        <span class="acc muted"></span>
+      </div>
+      <a class="ptitle" target="_blank" rel="noopener noreferrer"></a>
+      <div class="ptags"></div>
+      <p class="pwhy"></p>
+      <details class="phint">
+        <summary>Show hint</summary>
+        <p></p>
+      </details>
+    </li>
+  </template>
+
+  {% if google_client_id %}
+  <script src="https://accounts.google.com/gsi/client" async></script>
+  {% endif %}
+  <script>window.APP_CONFIG = { googleClientId: {{ google_client_id|tojson }} };</script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
